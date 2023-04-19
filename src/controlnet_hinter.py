@@ -1,5 +1,3 @@
-
-
 from annotator.util import resize_image, HWC3
 from annotator.canny import CannyDetector
 from annotator.midas import MidasDetector
@@ -23,9 +21,9 @@ def hint_canny(image: Image.Image, width=512, height=512, low_threshold=100, hig
 
         img = resize_image(HWC3(input_image), image_resolution)
 
-        if not 'canny' in annotators:
-            annotators['canny'] = CannyDetector()
-        detected_map = annotators['canny'](img, low_threshold, high_threshold)
+        if not "canny" in annotators:
+            annotators["canny"] = CannyDetector()
+        detected_map = annotators["canny"](img, low_threshold, high_threshold)
         detected_map = HWC3(detected_map)
         return Image.fromarray(detected_map)
 
@@ -37,17 +35,15 @@ def hint_depth(image: Image.Image, width=512, height=512, detect_resolution=384)
 
         input_image = HWC3(input_image)
 
-        if not 'midas' in annotators:
-            annotators['midas'] = MidasDetector()
+        if not "midas" in annotators:
+            annotators["midas"] = MidasDetector()
 
-        detected_map, _ = annotators['midas'](
-            resize_image(input_image, detect_resolution))
+        detected_map, _ = annotators["midas"](resize_image(input_image, detect_resolution))
         detected_map = HWC3(detected_map)
         img = resize_image(input_image, image_resolution)
         H, W, C = img.shape
 
-        detected_map = cv2.resize(
-            detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
+        detected_map = cv2.resize(detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
         return Image.fromarray(detected_map)
 
 
@@ -58,17 +54,15 @@ def hint_fake_scribble(image: Image.Image, width=512, height=512, detect_resolut
 
         input_image = HWC3(input_image)
 
-        if not 'hed' in annotators:
-            annotators['hed'] = HEDdetector()
+        if not "hed" in annotators:
+            annotators["hed"] = HEDdetector()
 
-        detected_map = annotators['hed'](
-            resize_image(input_image, detect_resolution))
+        detected_map = annotators["hed"](resize_image(input_image, detect_resolution))
         detected_map = HWC3(detected_map)
         img = resize_image(input_image, image_resolution)
         H, W, C = img.shape
 
-        detected_map = cv2.resize(
-            detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
+        detected_map = cv2.resize(detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
         detected_map = nms(detected_map, 127, 3.0)
         detected_map = cv2.GaussianBlur(detected_map, (0, 0), 3.0)
         detected_map[detected_map > 4] = 255
@@ -83,58 +77,64 @@ def hint_hed(image: Image.Image, width=512, height=512, detect_resolution=512):
 
         input_image = HWC3(input_image)
 
-        if not 'hed' in annotators:
-            annotators['hed'] = HEDdetector()
+        if not "hed" in annotators:
+            annotators["hed"] = HEDdetector()
 
-        detected_map = annotators['hed'](
-            resize_image(input_image, detect_resolution))
+        detected_map = annotators["hed"](resize_image(input_image, detect_resolution))
         detected_map = HWC3(detected_map)
         img = resize_image(input_image, image_resolution)
         H, W, C = img.shape
 
-        detected_map = cv2.resize(
-            detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
+        detected_map = cv2.resize(detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
         return Image.fromarray(detected_map)
 
 
-def hint_hough(image: Image.Image, width=512, height=512, detect_resolution=512,
-               value_threshold=0.1, distance_threshold=0.1):
+def hint_hough(
+    image: Image.Image,
+    width=512,
+    height=512,
+    detect_resolution=512,
+    value_threshold=0.1,
+    distance_threshold=0.1,
+):
     with torch.no_grad():
         input_image = np.array(image)
         image_resolution = width
 
         input_image = HWC3(input_image)
-        if not 'mlsd' in annotators:
-            annotators['mlsd'] = MLSDdetector()
-        detected_map = annotators['mlsd'](resize_image(
-            input_image, detect_resolution), value_threshold, distance_threshold)
+        if not "mlsd" in annotators:
+            annotators["mlsd"] = MLSDdetector()
+        detected_map = annotators["mlsd"](
+            resize_image(input_image, detect_resolution), value_threshold, distance_threshold
+        )
         detected_map = HWC3(detected_map)
         img = resize_image(input_image, image_resolution)
         H, W, C = img.shape
 
-        detected_map = cv2.resize(
-            detected_map, (W, H), interpolation=cv2.INTER_NEAREST)
+        detected_map = cv2.resize(detected_map, (W, H), interpolation=cv2.INTER_NEAREST)
         return Image.fromarray(detected_map)
 
 
-def hint_normal(image: Image.Image, width=512, height=512, detect_resolution=384, bg_threshold=0.4):
+def hint_normal(
+    image: Image.Image, width=512, height=512, detect_resolution=384, bg_threshold=0.4, device="cpu"
+):
     with torch.no_grad():
         input_image = np.array(image)
         image_resolution = width
 
         input_image = HWC3(input_image)
 
-        if not 'midas' in annotators:
-            annotators['midas'] = MidasDetector()
+        if not "midas" in annotators:
+            annotators["midas"] = MidasDetector(device)
 
-        _, detected_map = annotators['midas'](
-            resize_image(input_image, detect_resolution), bg_th=bg_threshold)
+        _, detected_map = annotators["midas"](
+            resize_image(input_image, detect_resolution), bg_th=bg_threshold
+        )
         detected_map = HWC3(detected_map)
         img = resize_image(input_image, image_resolution)
         H, W, C = img.shape
 
-        detected_map = cv2.resize(
-            detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
+        detected_map = cv2.resize(detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
         return Image.fromarray(detected_map)
 
 
@@ -145,17 +145,15 @@ def hint_openpose(image: Image.Image, width=512, height=512, detect_resolution=5
 
         input_image = HWC3(input_image)
 
-        if not 'openpose' in annotators:
-            annotators['openpose'] = OpenposeDetector()
+        if not "openpose" in annotators:
+            annotators["openpose"] = OpenposeDetector()
 
-        detected_map, _ = annotators['openpose'](
-            resize_image(input_image, detect_resolution))
+        detected_map, _ = annotators["openpose"](resize_image(input_image, detect_resolution))
         detected_map = HWC3(detected_map)
         img = resize_image(input_image, image_resolution)
         H, W, C = img.shape
 
-        detected_map = cv2.resize(
-            detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
+        detected_map = cv2.resize(detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
         return Image.fromarray(detected_map)
 
 
@@ -179,15 +177,13 @@ def hint_segmentation(image: Image.Image, width=512, height=512, detect_resoluti
 
         input_image = HWC3(input_image)
 
-        if not 'uniformer' in annotators:
-            annotators['uniformer'] = UniformerDetector()
+        if not "uniformer" in annotators:
+            annotators["uniformer"] = UniformerDetector()
 
-        detected_map = annotators['uniformer'](
-            resize_image(input_image, detect_resolution))
+        detected_map = annotators["uniformer"](resize_image(input_image, detect_resolution))
 
         img = resize_image(input_image, image_resolution)
         H, W, C = img.shape
 
-        detected_map = cv2.resize(
-            detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
+        detected_map = cv2.resize(detected_map, (W, H), interpolation=cv2.INTER_LINEAR)
         return Image.fromarray(detected_map)
